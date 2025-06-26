@@ -24,24 +24,9 @@ interface Contact {
 
 interface ExcelRow {
   'Full Name': string;
-  'First Name': string;
-  'Last Name': string;
   'Primary Phone': string;
   'Mobile Phone': string;
-  'Home Phone': string;
-  'Work Phone': string;
   'Primary Email': string;
-  'Home Email': string;
-  'Work Email': string;
-  'Other Email': string;
-  'Company': string;
-  'Job Title': string;
-  'Street Address': string;
-  'City': string;
-  'State/Region': string;
-  'Postal Code': string;
-  'Country': string;
-  'Birthday': string;
   'Notes': string;
 }
 
@@ -91,7 +76,7 @@ export class ContactExporter {
   private formatDate(date: Date): string {
     if (!date) return '';
     try {
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString('pt-BR', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
@@ -110,24 +95,9 @@ export class ContactExporter {
 
       return {
         'Full Name': contact.name || '',
-        'First Name': contact.firstName || '',
-        'Last Name': contact.lastName || '',
         'Primary Phone': phoneNumbers[0] ? this.formatPhoneNumber(phoneNumbers[0].number) : '',
         'Mobile Phone': this.getPhoneByLabel(phoneNumbers, 'mobile') || this.getPhoneByLabel(phoneNumbers, 'cell'),
-        'Home Phone': this.getPhoneByLabel(phoneNumbers, 'home'),
-        'Work Phone': this.getPhoneByLabel(phoneNumbers, 'work') || this.getPhoneByLabel(phoneNumbers, 'office'),
         'Primary Email': emails[0] ? emails[0].email : '',
-        'Home Email': this.getEmailByLabel(emails, 'home'),
-        'Work Email': this.getEmailByLabel(emails, 'work') || this.getEmailByLabel(emails, 'office'),
-        'Other Email': emails[1] && !emails[1].label?.toLowerCase().includes('home') && !emails[1].label?.toLowerCase().includes('work') ? emails[1].email : '',
-        'Company': contact.company || '',
-        'Job Title': contact.jobTitle || '',
-        'Street Address': primaryAddress?.street || '',
-        'City': primaryAddress?.city || '',
-        'State/Region': primaryAddress?.region || '',
-        'Postal Code': primaryAddress?.postalCode || '',
-        'Country': primaryAddress?.country || '',
-        'Birthday': this.formatDate(contact.birthday as Date),
         'Notes': contact.note || '',
       };
     });
@@ -144,25 +114,10 @@ export class ContactExporter {
 
       // Set column widths for better readability
       const columnWidths = [
-        { wch: 20 }, // Full Name
-        { wch: 15 }, // First Name
-        { wch: 15 }, // Last Name
+        { wch: 30 }, // Full Name
         { wch: 18 }, // Primary Phone
         { wch: 18 }, // Mobile Phone
-        { wch: 18 }, // Home Phone
-        { wch: 18 }, // Work Phone
         { wch: 25 }, // Primary Email
-        { wch: 25 }, // Home Email
-        { wch: 25 }, // Work Email
-        { wch: 25 }, // Other Email
-        { wch: 20 }, // Company
-        { wch: 20 }, // Job Title
-        { wch: 30 }, // Street Address
-        { wch: 15 }, // City
-        { wch: 15 }, // State/Region
-        { wch: 12 }, // Postal Code
-        { wch: 15 }, // Country
-        { wch: 12 }, // Birthday
         { wch: 30 }, // Notes
       ];
       
