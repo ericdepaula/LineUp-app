@@ -1,11 +1,15 @@
 {
   "expo": {
-    "name": "Exporter",
+    "name": "Contatos para Excel",
     "slug": "Contact-Export-App",
-    "version": "1.0.1",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "backgroundColor": "#251a58",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#211e49"
+    },
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
