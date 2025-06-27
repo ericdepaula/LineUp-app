@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,64 +12,91 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Info, Shield, HelpCircle, Star, ExternalLink } from 'lucide-react-native';
 
 export default function SettingsTab() {
-  const openURL = async (url: string) => {
+  const openURL = useCallback(async (url: string) => {
     try {
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert('Error', 'Unable to open the link');
+        Alert.alert('Erro', 'Não foi possível abrir o link');
       }
     } catch (error) {
-      Alert.alert('Error', 'Unable to open the link');
+      Alert.alert('Erro', 'Não foi possível abrir o link');
     }
-  };
+  }, []);
 
-  const showAbout = () => {
+  const showAbout = useCallback(() => {
     Alert.alert(
-      'About Contact Export',
-      'Version 1.0.0\n\nA simple and secure way to export your contacts to Excel format. All processing is done locally on your device to ensure your privacy.',
+      'Sobre o Exportador de Contatos',
+      'Versão 2.0.0\n\nUma forma simples e segura de exportar seus contatos para o formato Excel. Todo o processamento é feito localmente no seu dispositivo para garantir sua privacidade.',
       [{ text: 'OK' }]
     );
-  };
+  }, []);
 
-  const showPrivacyInfo = () => {
+  const showPrivacyInfo = useCallback(() => {
     Alert.alert(
-      'Privacy & Security',
-      'Your contact data is processed entirely on your device. No information is sent to external servers. The app only accesses contacts when you explicitly grant permission.',
+      'Privacidade e Segurança',
+      'Seus dados de contato são processados inteiramente no seu dispositivo. Nenhuma informação é enviada para servidores externos. O app só acessa os contatos quando você concede permissão explicitamente.',
       [{ text: 'OK' }]
     );
-  };
+  }, []);
 
-  const showHelp = () => {
+  const showHelp = useCallback(() => {
     Alert.alert(
-      'How to Use',
-      '1. Grant contact permissions when prompted\n2. Select the contacts you want to export\n3. Tap "Export" to generate an Excel file\n4. Share or save the file using your device\'s sharing options\n\nThe Excel file will contain all available contact information including names, phone numbers, emails, and addresses.',
+      'Como usar',
+      '1. Conceda permissão de contatos quando solicitado\n2. Selecione os contatos que deseja exportar\n3. Toque em "Exportar" para gerar um arquivo Excel\n4. Compartilhe ou salve o arquivo usando as opções do seu dispositivo\n\nO arquivo Excel conterá todas as informações disponíveis dos contatos, incluindo nomes e telefones.',
       [{ text: 'OK' }]
     );
-  };
+  }, []);
+
+  const handleRateApp = useCallback(() => {
+    Alert.alert(
+      'Avaliar App',
+      'Obrigado pelo seu interesse em ontribuir com nosso app! Toda opinião é bem vinda!\nSe quiser me ajudar com qualquer valor para o meu café ☕, ficarei muito grato. \n\nEmail:ericdepaula.dev@gmail.com',
+      [
+        {
+          text: 'Copiar Email',
+          onPress: () => {
+            try {
+              // Clipboard API is available in react-native
+              // If using Expo: import * as Clipboard from 'expo-clipboard'
+              // Otherwise: import { Clipboard } from 'react-native'
+              // Here, let's use Expo Clipboard for compatibility
+              import('expo-clipboard').then(Clipboard => {
+                Clipboard.setStringAsync('ericdepaula.dev@gmail.com');
+                Alert.alert('Copiado!', 'Email copiado para a área de transferência.');
+              });
+            } catch {
+              Alert.alert('Erro', 'Não foi possível copiar o email.');
+            }
+          }
+        },
+        { text: 'OK' }
+      ]
+    );
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.title}>Configurações</Text>
         <Text style={styles.subtitle}>
-          App information and preferences
+          Informações do app e preferências
         </Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Information</Text>
+          <Text style={styles.sectionTitle}>Informações</Text>
           
           <TouchableOpacity style={styles.settingItem} onPress={showAbout}>
             <View style={styles.settingIcon}>
               <Info size={20} color="#007AFF" />
             </View>
             <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>About</Text>
+              <Text style={styles.settingTitle}>Sobre</Text>
               <Text style={styles.settingDescription}>
-                App version and information
+                Versão do app e informações
               </Text>
             </View>
           </TouchableOpacity>
@@ -79,9 +106,9 @@ export default function SettingsTab() {
               <Shield size={20} color="#34C759" />
             </View>
             <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Privacy & Security</Text>
+              <Text style={styles.settingTitle}>Privacidade e Segurança</Text>
               <Text style={styles.settingDescription}>
-                How we protect your data
+                Como protegemos seus dados
               </Text>
             </View>
           </TouchableOpacity>
@@ -91,73 +118,67 @@ export default function SettingsTab() {
               <HelpCircle size={20} color="#FF9500" />
             </View>
             <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Help & Support</Text>
+              <Text style={styles.settingTitle}>Ajuda e Suporte</Text>
               <Text style={styles.settingDescription}>
-                How to use the app
+                Como usar o aplicativo
               </Text>
             </View>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Features</Text>
+          <Text style={styles.sectionTitle}>Funcionalidades</Text>
           
           <View style={styles.featureItem}>
-            <Text style={styles.featureTitle}>📱 Native Contact Access</Text>
+            <Text style={styles.featureTitle}>📱 Acesso Nativo aos Contatos</Text>
             <Text style={styles.featureDescription}>
-              Direct access to your device contacts without requiring cloud exports
+              Acesso direto aos contatos do seu dispositivo sem necessidade de exportação para a nuvem
             </Text>
           </View>
 
           <View style={styles.featureItem}>
-            <Text style={styles.featureTitle}>📊 Excel Export</Text>
+            <Text style={styles.featureTitle}>📊 Exportação para Excel</Text>
             <Text style={styles.featureDescription}>
-              Professional .xlsx format with organized columns and proper formatting
+              Formato profissional .xlsx com colunas organizadas e formatação adequada
             </Text>
           </View>
 
           <View style={styles.featureItem}>
-            <Text style={styles.featureTitle}>🔒 Privacy First</Text>
+            <Text style={styles.featureTitle}>🔒 Privacidade em Primeiro Lugar</Text>
             <Text style={styles.featureDescription}>
-              All processing happens locally on your device - no data leaves your phone
+              Todo o processamento acontece localmente no seu dispositivo - nenhum dado sai do seu celular
             </Text>
           </View>
 
           <View style={styles.featureItem}>
-            <Text style={styles.featureTitle}>📤 Easy Sharing</Text>
+            <Text style={styles.featureTitle}>📤 Compartilhamento Fácil</Text>
             <Text style={styles.featureDescription}>
-              Share via email, cloud storage, or save to your device
+              Compartilhe por e-mail, armazenamento em nuvem ou salve no seu dispositivo
             </Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
+          <Text style={styles.sectionTitle}>Suporte</Text>
           <Text style={styles.supportText}>
-            If you find this app helpful, please consider rating it in the App Store. Your feedback helps us improve the app and reach more users who need this functionality.
+            Se você achou este app útil, compartilhe com seus amigos. Sua contribuição nos ajuda a melhorar o app e alcançar mais pessoas que precisam desta funcionalidade.
           </Text>
           
           <TouchableOpacity 
             style={styles.rateButton}
-            onPress={() => {
-              Alert.alert(
-                'Rate App',
-                'Thank you for your interest in rating our app! Please visit your device\'s app store to leave a review.',
-                [{ text: 'OK' }]
-              );
-            }}
+            onPress={handleRateApp}
           >
             <Star size={20} color="#FFD700" />
-            <Text style={styles.rateButtonText}>Rate This App</Text>
+            <Text style={styles.rateButtonText}>Avaliar este App</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Contact Export App v1.0.0
+            Exportador de Contatos v2.0.0
           </Text>
           <Text style={styles.footerSubtext}>
-            Built with React Native & Expo
+            Desenvolvido por Eric de Paula
           </Text>
         </View>
       </ScrollView>
