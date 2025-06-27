@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,22 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  Platform,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Contacts from 'expo-contacts';
-import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { Search, Users, Download, CheckCircle2, Circle } from 'lucide-react-native';
+import {
+  Search,
+  Users,
+  Download,
+  CheckCircle2,
+  Circle,
+} from 'lucide-react-native';
 import { ContactExporter } from '@/components/ContactExporter';
+import { enableScreens } from 'react-native-screens';
+
+enableScreens();
 
 interface Contact {
   id: string;
@@ -23,18 +31,13 @@ interface Contact {
   firstName?: string;
   lastName?: string;
   phoneNumbers?: Array<{ number: string; label?: string }>;
-  emails?: Array<{ email: string; label?: string }>;
-  addresses?: Array<{ street?: string; city?: string; region?: string; postalCode?: string; country?: string; label?: string }>;
-  company?: string;
-  jobTitle?: string;
-  birthday?: Date;
-  note?: string;
 }
 
-export default function ExportTab() {
+const ExportTab = React.memo(function ExportTab() {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
-  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(
+    new Set()
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,19 +48,16 @@ export default function ExportTab() {
     requestPermissions();
   }, []);
 
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredContacts(contacts);
-    } else {
-      const filtered = contacts.filter(contact =>
-        contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (contact.firstName && contact.firstName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (contact.lastName && contact.lastName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (contact.company && contact.company.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-      setFilteredContacts(filtered);
-    }
-  }, [searchQuery, contacts]);
+  const filteredContacts = useMemo(() => {
+    if (searchQuery.trim() === '') return contacts;
+    const q = searchQuery.toLowerCase();
+    return contacts.filter(
+      (contact) =>
+        contact.name.toLowerCase().includes(q) ||
+        (contact.firstName && contact.firstName.toLowerCase().includes(q)) ||
+        (contact.lastName && contact.lastName.toLowerCase().includes(q))
+    );
+  }, [contacts, searchQuery]);
 
   const requestPermissions = async () => {
     try {
@@ -76,39 +76,30 @@ export default function ExportTab() {
     try {
       setIsLoading(true);
       const { data } = await Contacts.getContactsAsync({
-        fields: [
-          Contacts.Fields.Name,
-          Contacts.Fields.FirstName,
-          Contacts.Fields.LastName,
-          Contacts.Fields.PhoneNumbers,
-          Contacts.Fields.Emails,
-          Contacts.Fields.Addresses,
-          Contacts.Fields.Company,
-          Contacts.Fields.JobTitle,
-          Contacts.Fields.Birthday,
-          Contacts.Fields.Note,
-        ],
+        fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
       });
 
-      const processedContacts: Contact[] = data.map(contact => ({
-        id: contact.id,
-        name: contact.name || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact',
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        phoneNumbers: contact.phoneNumbers,
-        emails: contact.emails,
-        addresses: contact.addresses,
-        company: contact.company,
-        jobTitle: contact.jobTitle,
-        birthday: contact.birthday,
-        note: contact.note,
+      const processedContacts: Contact[] = data.map((contact) => ({
+        id: contact.id || Math.random().toString(36).substring(2, 15),
+        name:
+          contact.name ||
+          `${contact.firstName || ''} ${contact.lastName || ''}`.trim() ||
+          'Contato sem nome',
+        firstName: contact.firstName, // <-- add this
+        lastName: contact.lastName,   // <-- add this
+        phoneNumbers: contact.phoneNumbers
+          ? contact.phoneNumbers
+              .filter((pn) => typeof pn.number === 'string' && pn.number)
+              .map((pn) => ({
+                number: pn.number as string,
+                label: pn.label,
+              }))
+          : undefined,
       }));
-
       setContacts(processedContacts);
-      setFilteredContacts(processedContacts);
     } catch (error) {
       console.error('Error loading contacts:', error);
-      Alert.alert('Error', 'Failed to load contacts. Please try again.');
+      Alert.alert('Erro', 'Falha ao carregar contatos. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -128,13 +119,18 @@ export default function ExportTab() {
     if (selectedContacts.size === filteredContacts.length) {
       setSelectedContacts(new Set());
     } else {
-      setSelectedContacts(new Set(filteredContacts.map(contact => contact.id)));
+      setSelectedContacts(
+        new Set(filteredContacts.map((contact) => contact.id))
+      );
     }
   };
 
   const exportToExcel = async () => {
     if (selectedContacts.size === 0) {
-      Alert.alert('No Selection', 'Please select at least one contact to export.');
+      Alert.alert(
+        'Nenhuma seleção',
+        'Selecione pelo menos um contato para exportar.'
+      );
       return;
     }
 
@@ -142,13 +138,13 @@ export default function ExportTab() {
       setIsExporting(true);
       setExportProgress(0);
 
-      const selectedContactsData = contacts.filter(contact => 
+      const selectedContactsData = contacts.filter((contact) =>
         selectedContacts.has(contact.id)
       );
 
       // Simulate progress for better UX
       const progressInterval = setInterval(() => {
-        setExportProgress(prev => Math.min(prev + 10, 90));
+        setExportProgress((prev) => Math.min(prev + 10, 90));
       }, 100);
 
       const exporter = new ContactExporter();
@@ -161,23 +157,26 @@ export default function ExportTab() {
       setTimeout(async () => {
         if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(filePath, {
-            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            dialogTitle: 'Export Contacts',
+            mimeType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            dialogTitle: 'Exportar Contatos',
           });
         } else {
           Alert.alert(
-            'Export Complete',
-            `Your contacts have been exported successfully!\n\nFile saved to: ${filePath}`,
+            'Exportação Concluída',
+            `Seus contatos foram exportados com sucesso!\n\nArquivo salvo em: ${filePath}`,
             [{ text: 'OK' }]
           );
         }
         setIsExporting(false);
         setExportProgress(0);
       }, 500);
-
     } catch (error) {
       console.error('Export error:', error);
-      Alert.alert('Export Failed', 'There was an error exporting your contacts. Please try again.');
+      Alert.alert(
+        'Falha na exportação',
+        'Ocorreu um erro ao exportar seus contatos. Tente novamente.'
+      );
       setIsExporting(false);
       setExportProgress(0);
     }
@@ -188,7 +187,7 @@ export default function ExportTab() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Checking permissions...</Text>
+          <Text style={styles.loadingText}>Verificando permissões...</Text>
         </View>
       </SafeAreaView>
     );
@@ -199,12 +198,16 @@ export default function ExportTab() {
       <SafeAreaView style={styles.container}>
         <View style={styles.permissionContainer}>
           <Users size={64} color="#8E8E93" />
-          <Text style={styles.permissionTitle}>Contacts Access Required</Text>
+          <Text style={styles.permissionTitle}>Acesso aos Contatos Necessário</Text>
           <Text style={styles.permissionText}>
-            To export your contacts to Excel, we need access to your contacts. This data is processed locally on your device and never sent to external servers.
+            Para exportar seus contatos para Excel, precisamos de acesso aos seus contatos.
+            Esses dados são processados localmente no seu dispositivo e nunca enviados para servidores externos.
           </Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={requestPermissions}>
-            <Text style={styles.permissionButtonText}>Grant Permission</Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={requestPermissions}
+          >
+            <Text style={styles.permissionButtonText}>Conceder Permissão</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -214,9 +217,9 @@ export default function ExportTab() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Export Contacts</Text>
+        <Text style={styles.title}>Exportar Contatos</Text>
         <Text style={styles.subtitle}>
-          Select contacts to export to Excel spreadsheet
+          Selecione os contatos que deseja exportar
         </Text>
       </View>
 
@@ -224,7 +227,7 @@ export default function ExportTab() {
         <Search size={20} color="#8E8E93" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search contacts..."
+          placeholder="Buscar contatos..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#8E8E93"
@@ -237,27 +240,31 @@ export default function ExportTab() {
           onPress={selectAllContacts}
         >
           <Text style={styles.selectAllText}>
-            {selectedContacts.size === filteredContacts.length ? 'Deselect All' : 'Select All'}
+            {selectedContacts.size === filteredContacts.length
+              ? 'Desmarcar Todos'
+              : 'Selecionar Todos'}
           </Text>
         </TouchableOpacity>
         <Text style={styles.selectedCount}>
-          {selectedContacts.size} of {filteredContacts.length} selected
+          {selectedContacts.size} de {filteredContacts.length} selecionados
         </Text>
       </View>
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading contacts...</Text>
+          <Text style={styles.loadingText}>Carregando contatos...</Text>
         </View>
       ) : (
-        <ScrollView style={styles.contactsList} showsVerticalScrollIndicator={false}>
-          {filteredContacts.map((contact) => (
+        <FlatList
+          data={filteredContacts}
+          keyExtractor={(contact) => contact.id}
+          renderItem={({ item: contact }) => (
             <TouchableOpacity
               key={contact.id}
               style={[
                 styles.contactItem,
-                selectedContacts.has(contact.id) && styles.contactItemSelected
+                selectedContacts.has(contact.id) && styles.contactItemSelected,
               ]}
               onPress={() => toggleContactSelection(contact.id)}
             >
@@ -266,16 +273,6 @@ export default function ExportTab() {
                 {contact.phoneNumbers && contact.phoneNumbers.length > 0 && (
                   <Text style={styles.contactDetail}>
                     📞 {contact.phoneNumbers[0].number}
-                  </Text>
-                )}
-                {contact.emails && contact.emails.length > 0 && (
-                  <Text style={styles.contactDetail}>
-                    ✉️ {contact.emails[0].email}
-                  </Text>
-                )}
-                {contact.company && (
-                  <Text style={styles.contactDetail}>
-                    🏢 {contact.company}
                   </Text>
                 )}
               </View>
@@ -287,22 +284,22 @@ export default function ExportTab() {
                 )}
               </View>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          )}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }} // Add padding for the button
+        />
       )}
 
-      <View style={styles.exportContainer}>
+      {/* Export button fixed at the bottom */}
+      <View style={styles.exportButtonWrapper}>
         {isExporting && (
           <View style={styles.progressContainer}>
             <Text style={styles.progressText}>
-              Exporting contacts... {exportProgress}%
+              Exportando contatos... {exportProgress}%
             </Text>
             <View style={styles.progressBar}>
               <View
-                style={[
-                  styles.progressFill,
-                  { width: `${exportProgress}%` }
-                ]}
+                style={[styles.progressFill, { width: `${exportProgress}%` }]}
               />
             </View>
           </View>
@@ -310,7 +307,8 @@ export default function ExportTab() {
         <TouchableOpacity
           style={[
             styles.exportButton,
-            (selectedContacts.size === 0 || isExporting) && styles.exportButtonDisabled
+            (selectedContacts.size === 0 || isExporting) &&
+              styles.exportButtonDisabled,
           ]}
           onPress={exportToExcel}
           disabled={selectedContacts.size === 0 || isExporting}
@@ -321,13 +319,15 @@ export default function ExportTab() {
             <Download size={20} color="#FFFFFF" />
           )}
           <Text style={styles.exportButtonText}>
-            {isExporting ? 'Exporting...' : `Export ${selectedContacts.size} Contacts`}
+            {isExporting
+              ? 'Exportando...'
+              : `Exportar ${selectedContacts.size} Contatos`}
           </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -433,6 +433,22 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     marginLeft: 12,
   },
+  exportButtonWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+    // Add shadow for iOS and elevation for Android if desired
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
   exportContainer: {
     backgroundColor: '#FFFFFF',
     padding: 20,
@@ -532,3 +548,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export default ExportTab;
+
