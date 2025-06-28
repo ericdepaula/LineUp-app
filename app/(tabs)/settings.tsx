@@ -52,7 +52,7 @@ export default function SettingsTab() {
   const handleRateApp = useCallback(() => {
     Alert.alert(
       'Avaliar App',
-      'Obrigado pelo seu interesse em ontribuir com nosso app! Toda opinião é bem vinda!\nSe quiser me ajudar com qualquer valor para o meu café ☕, ficarei muito grato. \n\nEmail:ericdepaula.dev@gmail.com',
+      'Obrigado pelo seu interesse em contribuir com nosso app! Toda opinião é bem vinda!\nSe quiser me ajudar com qualquer valor para o meu café ☕, ficarei muito grato. \n\nEmail:ericdepaula.dev@gmail.com',
       [
         {
           text: 'Copiar Email',
