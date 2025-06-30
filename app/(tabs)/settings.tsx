@@ -28,7 +28,7 @@ export default function SettingsTab() {
   const showAbout = useCallback(() => {
     Alert.alert(
       'Sobre o Exportador de Contatos',
-      'Uma forma simples e segura de exportar seus contatos para o formato Excel. Todo o processamento é feito localmente no seu dispositivo para garantir sua privacidade.\n\nVersão 2.0.1',
+      'Uma forma simples e segura de exportar seus contatos para o formato Excel. Todo o processamento é feito localmente no seu dispositivo para garantir sua privacidade.\n\nVersão 2.0.2',
       [{ text: 'OK' }]
     );
   }, []);
@@ -175,7 +175,7 @@ export default function SettingsTab() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Exportador de Contatos v2.0.1
+            Exportador de Contatos v2.0.2
           </Text>
           <Text style={styles.footerSubtext}>
             Desenvolvido por Eric de Paula
