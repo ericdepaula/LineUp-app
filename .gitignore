@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+package-lock.json
 
 # expo
 .expo/
@@ -34,4 +35,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-package-lock.json
+# vscode
+.vscode/
+node_modules
