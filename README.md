@@ -84,4 +84,4 @@ O APK será gerado e as instruções aparecerão no terminal.
 1. Abra o aplicativo no seu dispositivo ou emulador.
 2. Permita o acesso aos contatos quando solicitado.
 3. Toque no botão de exportação para gerar o arquivo Excel (.xlsx) com seus contatos.
-4. O arquivo será salvo na pasta de downloads do dispositivo ou conforme instruções do app.
+4. O arquivo Excel gerado já sai pronto para exportar, compartilhar ou utilizar como desejar. Ele será salvo na pasta de downloads do dispositivo ou conforme instruções do app.
